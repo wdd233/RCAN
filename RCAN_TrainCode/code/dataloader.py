@@ -8,7 +8,7 @@ from torch.utils.data import SequentialSampler
 from torch.utils.data import RandomSampler
 from torch.utils.data import BatchSampler
 from torch.utils.data import _utils
-from torch.utils.data.dataloader import _DataLoaderIter
+from torch.utils.data.dataloader import _BaseDataLoaderIter
 
 from torch.utils.data._utils import collate
 from torch.utils.data._utils import signal_handling
@@ -65,7 +65,7 @@ def _ms_loop(dataset, index_queue, data_queue, done_event, collate_fn, scale, se
     except KeyboardInterrupt:
         pass
 
-class _MSDataLoaderIter(_DataLoaderIter):
+class _MSDataLoaderIter(_BaseDataLoaderIter):
 
     def __init__(self, loader):
         self.dataset = loader.dataset
@@ -144,6 +144,16 @@ class _MSDataLoaderIter(_DataLoaderIter):
             for _ in range(2 * self.num_workers):
                 self._put_indices()
 
+    def _put_indices(self):
+        assert self.batches_outstanding < 2 * self.num_workers
+        indices = next(self.sample_iter, None)
+        if indices is None:
+            return
+        self.index_queues[self.worker_queue_idx].put((self.send_idx, indices))
+        self.worker_queue_idx = (self.worker_queue_idx + 1) % self.num_workers
+        self.batches_outstanding += 1
+        self.send_idx += 1
+
 
 class MSDataLoader(DataLoader):
 
@@ -153,6 +163,6 @@ class MSDataLoader(DataLoader):
         )
         self.scale = cfg.scale
 
-    def __iter__(self):
-        return _MSDataLoaderIter(self)
+    # def __iter__(self):
+    #     return _MSDataLoaderIter(self)
 

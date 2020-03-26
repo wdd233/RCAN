@@ -3,8 +3,8 @@ import os
 from data import common
 
 import numpy as np
-# import scipy.misc as misc
-import cv2
+import scipy.misc as misc
+
 import torch
 import torch.utils.data as data
 
@@ -16,7 +16,7 @@ class SRData(data.Dataset):
         self.benchmark = benchmark
         self.scale = args.scale
         self.idx_scale = 0
-        self.ext = '.png'
+
         self._set_filesystem(args.dir_data)
 
         def _load_bin():
@@ -25,19 +25,19 @@ class SRData(data.Dataset):
                 np.load(self._name_lrbin(s)) for s in self.scale
             ]
 
-        if self.args.ext == 'img' or benchmark:
+        if args.ext == 'img' or benchmark:
             self.images_hr, self.images_lr = self._scan()
-        elif self.args.ext.find('sep') >= 0:
+        elif args.ext.find('sep') >= 0:
             self.images_hr, self.images_lr = self._scan()
-            if self.args.ext.find('reset') >= 0:
+            if args.ext.find('reset') >= 0:
                 print('Preparing seperated binary files')
                 for v in self.images_hr:
-                    hr = cv2.imread(v)
+                    hr = misc.imread(v)
                     name_sep = v.replace(self.ext, '.npy')
                     np.save(name_sep, hr)
                 for si, s in enumerate(self.scale):
                     for v in self.images_lr[si]:
-                        lr = cv2.imread(v)
+                        lr = misc.imread(v)
                         name_sep = v.replace(self.ext, '.npy')
                         np.save(name_sep, lr)
 
@@ -49,7 +49,7 @@ class SRData(data.Dataset):
                 for i in range(len(self.scale))
             ]
 
-        elif self.args.ext.find('bin') >= 0:
+        elif args.ext.find('bin') >= 0:
             try:
                 if args.ext.find('reset') >= 0:
                     raise IOError
@@ -62,11 +62,11 @@ class SRData(data.Dataset):
                     os.mkdir(bin_path)
 
                 list_hr, list_lr = self._scan()
-                hr = [cv2.imread(f) for f in list_hr]
+                hr = [misc.imread(f) for f in list_hr]
                 np.save(self._name_hrbin(), hr)
                 del hr
                 for si, s in enumerate(self.scale):
-                    lr_scale = [cv2.imread(f) for f in list_lr[si]]
+                    lr_scale = [misc.imread(f) for f in list_lr[si]]
                     np.save(self._name_lrbin(s), lr_scale)
                     del lr_scale
                 _load_bin()
@@ -104,8 +104,8 @@ class SRData(data.Dataset):
         hr = self.images_hr[idx]
         if self.args.ext == 'img' or self.benchmark:
             filename = hr
-            lr = cv2.imread(lr)
-            hr = cv2.imread(hr)
+            lr = misc.imread(lr)
+            hr = misc.imread(hr)
         elif self.args.ext.find('sep') >= 0:
             filename = hr
             lr = np.load(lr)
