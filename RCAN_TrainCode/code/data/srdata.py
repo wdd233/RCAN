@@ -16,7 +16,7 @@ class SRData(data.Dataset):
         self.benchmark = benchmark
         self.scale = args.scale
         self.idx_scale = 0
-
+        self.ext = '.png'
         self._set_filesystem(args.dir_data)
 
         def _load_bin():
@@ -25,11 +25,11 @@ class SRData(data.Dataset):
                 np.load(self._name_lrbin(s)) for s in self.scale
             ]
 
-        if args.ext == 'img' or benchmark:
+        if self.args.ext == 'img' or benchmark:
             self.images_hr, self.images_lr = self._scan()
-        elif args.ext.find('sep') >= 0:
+        elif self.args.ext.find('sep') >= 0:
             self.images_hr, self.images_lr = self._scan()
-            if args.ext.find('reset') >= 0:
+            if self.args.ext.find('reset') >= 0:
                 print('Preparing seperated binary files')
                 for v in self.images_hr:
                     hr = misc.imread(v)
@@ -49,7 +49,7 @@ class SRData(data.Dataset):
                 for i in range(len(self.scale))
             ]
 
-        elif args.ext.find('bin') >= 0:
+        elif self.args.ext.find('bin') >= 0:
             try:
                 if args.ext.find('reset') >= 0:
                     raise IOError
